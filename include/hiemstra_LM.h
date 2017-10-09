@@ -4,7 +4,9 @@
 
 #include "frequency.h"
 #include "tool.h"
+#include "display.h"
 #include <cstring>
+#include <cassert>
 #include <vector>
 #include <unordered_map>
 //#include <algorithm>
@@ -24,21 +26,21 @@ double Hiemstra_language_model(const std::vector<std::string> &query , const std
 
 	double proba = 0;
 
-	for(unsigned int i  = 0 ; i < document.size() ; i++){
-
-		if(document[i]=="\0"){std::cout<<"|"<<document[i]<<"|"<<" and size of the doc : "<<document.size()<<std::endl;}
-
-	}
-
 	for(unsigned int i = 0 ; i < query.size() ; i++){
 
 			coll_proba =  (1 - lambda)*( (double)coll_freq(cf , query[i])/collection_size );
 
 			if(coll_proba!=0){
 
-				doc_proba = (lambda)*( (double)term_freq(document , query[i])/doc_length );
+				doc_proba = (lambda)*( (double)(term_freq(document , query[i]))/doc_length );
+
+				//if(term_freq(document , query[i])!=0){std::cout << "(";}
+
+				//if(doc_proba!=0){std::cout << "3";}
 
 				proba += log(1 + doc_proba/coll_proba)/log(2);
+
+				//if(proba!=0){std::cout << "|";}
 
 			}
 
@@ -90,8 +92,6 @@ std::vector< std::vector< std::pair<int,double> > > Hiemstra_language_model(cons
 		iterator++;
 
 	}
-
-	std::cout<<std::endl;
 
 	return list_docs;
 

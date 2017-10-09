@@ -31,6 +31,21 @@ void display_map(const std::unordered_map<std::string , double> &map){
 }
 
 
+//display the contend of an unordered_map<int,double>
+void display_map(const std::unordered_map<int , double> &map){
+
+	auto iterator = map.begin();
+
+	while(iterator != map.end()){
+
+		std::cout<< iterator->first << " : " << iterator->second <<std::endl;
+		iterator++;
+
+	}
+
+}
+
+
 //display the contend of an unordered_map<string,unordered_map<string,double>>
 void display_map_map(const std::unordered_map< std::string , std::unordered_map<std::string,double> > &super_map){
 

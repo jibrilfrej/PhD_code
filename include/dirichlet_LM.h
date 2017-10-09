@@ -20,6 +20,13 @@ double Dirichlet_language_model(const double &mu , const std::vector<std::string
 
 	double res = 0;
 
+	//for(unsigned int i  = 0 ; i < document.size() ; i++){
+
+		//if(document[i]=="\0"){std::cout<<"|"<<document[i]<<"|"<<" and size of the doc : "<<document.size()<<std::endl;}
+
+	//}
+
+
 	//double collection_proba;
 
 	for(unsigned int i = 0 ; i < query.size() ; i++){

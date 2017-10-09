@@ -53,23 +53,24 @@ void compute_and_save_cosine(const std::string &collection_file , const std::str
 
 }
 
-void hiemstra_test(const std::string &collection_file , const std::string &queries_file){
+void hiemstra_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
-	double lambda = 0.0;
+	double lambda = 0.5;
 	int k = 1000;
-	double lambda_step = 0.05;
-	launch_Hiemstra_experience(collection_file , queries_file , lambda , lambda_step , k);
+	double lambda_step = 2;
+
+	launch_Hiemstra_experience(collection_file , queries_file , res_file , lambda , lambda_step , k);
 
 }
 
 
-void dirichlet_test(const std::string &collection_file , const std::string &queries_file){
+void dirichlet_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
-	double mu = 130;
+	double mu = 100;
 	int k = 1000;
-	double mu_step = 20;
+	double mu_step = 10;
 	int nb_iter = 1;
-	launch_Dirichlet_experience(collection_file , queries_file , mu , mu_step , nb_iter , k );
+	launch_Dirichlet_experience(collection_file , queries_file , res_file , mu , mu_step , nb_iter , k );
 
 }
 

@@ -6,6 +6,7 @@
 #include "basic_LM.h"
 #include "hiemstra_LM.h"
 #include "dirichlet_LM.h"
+#include "display.h"
 #include <cstring>
 #include <vector>
 #include <unordered_map>
@@ -14,7 +15,7 @@
 
 
 //Performs a set of experiments with a "regular" model
-void launch_Hiemstra_experience(const std::string &collection_file , const std::string &queries_file , double lambda , const double lambda_step , const int k){
+void launch_Hiemstra_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double lambda , const double lambda_step , const int k){
 
 	std::vector< std::vector< std::pair<int,double> > > results;
 	std::unordered_map< int , std::vector<std::string> > collection;
@@ -22,6 +23,8 @@ void launch_Hiemstra_experience(const std::string &collection_file , const std::
 	std::unordered_map <std::string,int> cf;
 	std::unordered_map <std::string,int> df;
 	std::string file_name;
+
+	double lambda_temp;
 
 	clock_t begin = clock();
 
@@ -32,33 +35,47 @@ void launch_Hiemstra_experience(const std::string &collection_file , const std::
 	display_stuff(collection ,queries , cf , df);
 
 	clock_t end = clock();
-  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
 
 	display_stuff(collection , queries , cf , df);
 
 	size_t nb_words = get_size_collection(cf);
 
-	while(lambda < 1 + lambda_step/1000){
+	unsigned int nb_iter = floor(1.0/lambda_step) + 1;
 
-		begin = clock();
-		results = Hiemstra_language_model(queries , collection , cf , nb_words , k , lambda);
-		end = clock();
-		elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-		std::cout<< "Time to perform all the queries for lambda = "<<lambda<<" : "<< elapsed_secs <<std::endl;
-		file_name = "../data/res/logresults";
-		file_name += std::to_string(lambda);
-		write_res_file(results , file_name , "CHIC-" , lambda);
-		lambda += lambda_step;
+	int nthreads, tid;
 
+	#pragma omp parallel private( file_name , lambda_temp , results , tid) shared(lambda)
+	{
+
+		tid = omp_get_thread_num();
+
+        //std::cout<<"Thread No "<<tid<<std::endl;
+        if (tid == 0)
+        {
+            nthreads = omp_get_num_threads();
+            std::cout<<"Number of thread: "<<nthreads<<std::endl;
+        }
+
+
+		#pragma omp for schedule(static)
+		for(unsigned int current_iter = 0 ; current_iter < nb_iter ; current_iter++){
+
+			lambda_temp += lambda + lambda_step*current_iter;
+			results = Hiemstra_language_model(queries , collection , cf , nb_words , k , lambda);
+			file_name = res_file;
+			file_name += std::to_string(lambda_temp);
+			write_res_file(results , file_name , "CHIC-" , lambda_temp);
+
+		}
 	}
-
 }
 
 
 
 //Performs a set of experiments with an embedded model
-void launch_Dirichlet_experience(const std::string &collection_file , const std::string &queries_file , double &mu , const double &mu_step , const int nb_iter , const int k ){
+void launch_Dirichlet_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double &mu , const double &mu_step , const int nb_iter , const int k ){
 
 	std::vector< std::vector< std::pair<int,double> > > results;
 	std::unordered_map< int , std::vector<std::string> > collection;
@@ -101,7 +118,7 @@ void launch_Dirichlet_experience(const std::string &collection_file , const std:
 
 			mu_temp = mu + mu_step*(current_iter);
 			results = Dirichlet_language_model(mu_temp , queries , collection , cf , k , nb_words);
-			file_name = "../data/res/results|";
+			file_name = res_file;
 			file_name += std::to_string(mu_temp);
 			write_res_file(results , file_name , "CHIC-" , mu_temp);
 			//mu += mu_step;
