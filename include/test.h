@@ -59,17 +59,17 @@ void hiemstra_test(const std::string &collection_file , const std::string &queri
 	int k = 1000;
 	double lambda_step = 0.1;
 
-	launch_indexed_Hiemstra_experience(collection_file , queries_file , res_file , lambda , lambda_step , k);
+	launch_Hiemstra_experience(collection_file , queries_file , res_file , lambda , lambda_step , k);
 
 }
 
 
 void dirichlet_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
-	double mu = 100;
+	double mu = 80;
 	int k = 1000;
 	double mu_step = 10;
-	int nb_iter = 1;
+	int nb_iter = 10;
 	launch_Dirichlet_experience(collection_file , queries_file , res_file , mu , mu_step , nb_iter , k );
 
 }
@@ -82,21 +82,21 @@ void embedding_test(const std::string &collection_file , const std::string &quer
 
 	int k = 1000;
 
-	double mu_min = 0;
+	double mu_min = 100;
 
-	double mu_max = 200;
+	double mu_max = 130;
 
 	double mu_step = 20;
 
-	double threshold_min = 0.4;
+	double threshold_min = 0.6;
 
-	double threshold_max = 1.0;
+	double threshold_max = 0.71;
 
 	double threshold_step = 0.05;
 
-	double alpha_min = 0.0;
+	double alpha_min = 0.7;
 
-	double alpha_max = 1;
+	double alpha_max = 0.81;
 
 	double alpha_step = 0.05;
 

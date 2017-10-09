@@ -18,27 +18,15 @@
 void launch_Hiemstra_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double lambda , const double lambda_step , const int k){
 
 	std::vector< std::vector< std::pair<int,double> > > results;
-	std::unordered_map< int , std::vector<std::string> > collection;
-	std::unordered_map< int , std::vector<std::string> > queries;
-	std::unordered_map <std::string,int> cf;
-	std::unordered_map <std::string,int> df;
+	std::unordered_map< int , std::vector<int> > collection;
+	std::unordered_map< int , std::vector<int> > queries;
+	std::unordered_map <std::string,int> index;
+	std::unordered_map <int,int> cf;
 	std::string file_name;
 
 	double lambda_temp;
 
-	clock_t begin = clock();
-
-	read_all_info(collection_file , queries_file , collection , queries , cf , df);
-
-	write_xml_collection_file(collection, "../../../Terrier4.2/terrier-core-4.2/share/CHIC2012/synthetic/xml_synthetic_collection");
-
-	display_stuff(collection ,queries , cf , df);
-
-	clock_t end = clock();
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
-
-	display_stuff(collection , queries , cf , df);
+	read_all_info_and_index(collection_file , queries_file , collection , queries , index , cf);
 
 	size_t nb_words = get_size_collection(cf);
 
@@ -74,8 +62,9 @@ void launch_Hiemstra_experience(const std::string &collection_file , const std::
 
 
 
-//Performs a set of experiments with a "regular" model
-void launch_indexed_Hiemstra_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double lambda , const double lambda_step , const int k){
+
+//Performs a set of experiments with an embedded model
+void launch_Dirichlet_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double &mu , const double &mu_step , const int nb_iter , const int k ){
 
 	std::vector< std::vector< std::pair<int,double> > > results;
 	std::unordered_map< int , std::vector<int> > collection;
@@ -84,71 +73,9 @@ void launch_indexed_Hiemstra_experience(const std::string &collection_file , con
 	std::unordered_map <int,int> cf;
 	std::string file_name;
 
-	double lambda_temp;
-	clock_t begin = clock();
+	double mu_temp;
 
 	read_all_info_and_index(collection_file , queries_file , collection , queries , index , cf);
-
-	clock_t end = clock();
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
-
-	size_t nb_words = get_size_collection(cf);
-
-	unsigned int nb_iter = floor(1.0/lambda_step) + 1;
-
-	int nthreads, tid;
-
-	#pragma omp parallel private( file_name , lambda_temp , results , tid) shared(lambda)
-	{
-
-		tid = omp_get_thread_num();
-
-        //std::cout<<"Thread No "<<tid<<std::endl;
-        if (tid == 0)
-        {
-            nthreads = omp_get_num_threads();
-            std::cout<<"Number of thread: "<<nthreads<<std::endl;
-        }
-
-
-		#pragma omp for schedule(static)
-		for(unsigned int current_iter = 0 ; current_iter < nb_iter ; current_iter++){
-
-			lambda_temp += lambda + lambda_step*current_iter;
-			results = Hiemstra_indexed_language_model(queries , collection , cf , nb_words , k , lambda_temp);
-			file_name = res_file;
-			file_name += std::to_string(lambda_temp);
-			write_res_file(results , file_name , "CHIC-" , lambda_temp);
-
-		}
-	}
-}
-
-
-
-
-//Performs a set of experiments with an embedded model
-void launch_Dirichlet_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , double &mu , const double &mu_step , const int nb_iter , const int k ){
-
-	std::vector< std::vector< std::pair<int,double> > > results;
-	std::unordered_map< int , std::vector<std::string> > collection;
-	std::unordered_map< int , std::vector<std::string> > queries;
-	std::unordered_map <std::string,int> cf;
-	std::unordered_map <std::string,int> df;
-	std::string file_name;
-	double mu_temp;
-	clock_t begin = clock();
-
-	read_all_info( collection_file , queries_file , collection , queries , cf , df);
-
-	write_xml_collection_file(collection, "../../../Terrier4.2/terrier-core-4.2/share/CHIC2012/synthetic/xml_synthetic_collection");
-
-	clock_t end = clock();
-  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
-
-	display_stuff(collection , queries , cf , df);
 
 	size_t nb_words = get_size_collection(cf);
 
