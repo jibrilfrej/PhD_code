@@ -115,7 +115,7 @@ void launch_Dirichlet_experience(const std::string &collection_file , const std:
 
 
 //Performs a set of experiments with an embedded model
-void launch_embedded_experience(const std::string &collection_file , const std::string &queries_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , double &mu_min , double &mu_max , const double &mu_step , const int k , const double &threshold_min , const double &threshold_max , const double &threshold_step , const double &alpha_min , const double &alpha_max , const double &alpha_step){
+void launch_embedded_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , const double &mu , const double &mu_step , const int &nb_iter_mu , const int k , const double &threshold, const double &threshold_step , const int &nb_iter_threshold , const double &alpha, const double &alpha_step , const int &nb_iter_alpha ){
 
 	std::unordered_map< std::string , std::unordered_map<std::string,double> > all_cos;
 	std::unordered_map<std::string,double> all_sum_cos;
@@ -123,19 +123,12 @@ void launch_embedded_experience(const std::string &collection_file , const std::
 	std::unordered_map< int , std::vector<std::string> > queries;
 	std::unordered_map <std::string,int> cf;
 	std::unordered_map <std::string,int> df;
-	int nb_iter_mu  = (int)myround((mu_max - mu_min)/abs(mu_step));
-	int nb_iter_threshold = (int)myround((threshold_max - threshold_min)/abs(threshold_step));
-	int nb_iter_alpha  = (int)myround((alpha_max - alpha_min)/abs(alpha_step));
-
-	std::cout<< "Number of iterations over the variable mu = " << nb_iter_mu <<std::endl;
-
-	std::cout<< "Number of iterations over the threshold = " << nb_iter_threshold <<std::endl;
-
-	std::cout<< "Number of iterations over the variable alpha = " << nb_iter_alpha <<std::endl;
 
 	std::cout<< "Total number of iterations : " << nb_iter_mu*nb_iter_threshold*nb_iter_alpha <<std::endl;
 
 	clock_t begin = clock();
+
+	double threshold_max = threshold+threshold_step*nb_iter_threshold;
 
 	read_all_info2( collection_file , queries_file , collection_cosine_file , queries_cosine_file , collection , queries , cf , df , all_cos , all_sum_cos , threshold_max);
 
@@ -172,14 +165,14 @@ void launch_embedded_experience(const std::string &collection_file , const std::
 
 					double threshold_temp = threshold_max - current_iter_threshold*threshold_step;
 
-					double mu_temp = mu_min + mu_step*current_iter_mu;
+					double mu_temp = mu + mu_step*current_iter_mu;
 
-					double alpha_temp = alpha_min + current_iter_alpha*alpha_step;
+					double alpha_temp = alpha + current_iter_alpha*alpha_step;
 
 					delete_low_similarities(collection_cosine_file , queries_cosine_file , all_cos , all_sum_cos , threshold_temp);
 					std::vector< std::vector< std::pair<int,double> > > results = Dirichlet_embedding_model(mu_temp , queries , collection , cf , all_sum_cos , all_cos , k , nb_words , alpha_temp);
 					std::cout<< "Performed all the queries for mu = "<<mu_temp<< " , for alpha = "<< alpha_temp <<" and the threshold = " << threshold_temp <<std::endl;
-					std::string file_name = "../data/res/results|";
+					std::string file_name = res_file;
 					file_name += std::to_string(mu_temp);
 					file_name.erase (file_name.size()-4,4);
 					file_name += "|";

@@ -75,32 +75,32 @@ void dirichlet_test(const std::string &collection_file , const std::string &quer
 }
 
 
-void embedding_test(const std::string &collection_file , const std::string &queries_file){
+void embedding_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
 	std::string collection_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos04";
 	std::string queries_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos_queries_04";
 
 	int k = 1000;
 
-	double mu_min = 100;
-
-	double mu_max = 130;
+	double mu = 100;
 
 	double mu_step = 20;
 
-	double threshold_min = 0.6;
+	int nb_iter_mu = 2;
 
-	double threshold_max = 0.71;
+	double threshold = 0.6;
 
 	double threshold_step = 0.05;
 
-	double alpha_min = 0.7;
+	int nb_iter_threshold = 2;
 
-	double alpha_max = 0.81;
+	double alpha = 0.6;
 
 	double alpha_step = 0.05;
 
-	launch_embedded_experience(collection_file , queries_file , collection_cosine_file , queries_cosine_file , mu_min , mu_max , mu_step , k , threshold_min , threshold_max , threshold_step , alpha_min , alpha_max, alpha_step);
+	int nb_iter_alpha = 2;
+
+	launch_embedded_experience(collection_file , queries_file , res_file , collection_cosine_file , queries_cosine_file , mu, mu_step , nb_iter_mu, k , threshold, threshold_step ,nb_iter_threshold, alpha, alpha_step , nb_iter_alpha);
 
 
 }

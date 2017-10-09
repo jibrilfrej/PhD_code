@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
 
 	else if(argc > 1 && std::string(argv[1]) == "embedding"){
 
-		embedding_test(collection_file , queries_file);
+		std::string res_file = "../data/res/embedding/results|";
+		embedding_test(collection_file , queries_file , res_file);
 
 	}
 
