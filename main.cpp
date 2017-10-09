@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
 	if(argc == 1){
 
-		write_Average_Precision("../data/AveragePrecision/AP" , "../../../trec_eval.8.1/results/" , false , false , true);
+		write_Average_Precision("../data/AveragePrecision/AP" , "../../../trec_eval.8.1/results/" , true , false , false);
 
 	}
 
@@ -35,13 +35,15 @@ int main(int argc, char** argv) {
 
 	else if(argc > 1 && std::string(argv[1]) == "hiemstra"){
 
-		hiemstra_test(collection_file , queries_file);
+		std::string res_file = "../data/res/hiemstra/results";
+		hiemstra_test(collection_file , queries_file , res_file);
 
 	}
 
 	else if(argc > 1 && std::string(argv[1]) == "dirichlet"){
 
-		dirichlet_test(collection_file , queries_file);
+		std::string res_file = "../data/res/dirichlet/results";
+		dirichlet_test(collection_file , queries_file , res_file);
 
 	}
 
