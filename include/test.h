@@ -55,11 +55,11 @@ void compute_and_save_cosine(const std::string &collection_file , const std::str
 
 void hiemstra_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
-	double lambda = 0.5;
+	double lambda = 0.0;
 	int k = 1000;
-	double lambda_step = 2;
+	double lambda_step = 0.1;
 
-	launch_Hiemstra_experience(collection_file , queries_file , res_file , lambda , lambda_step , k);
+	launch_indexed_Hiemstra_experience(collection_file , queries_file , res_file , lambda , lambda_step , k);
 
 }
 

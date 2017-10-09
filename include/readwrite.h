@@ -739,75 +739,32 @@ void write_all_files(const std::string &collection_file , const std::string &que
 void read_all_info(const std::string &collection_file , const std::string &queries_file , std::unordered_map< int , std::vector<std::string> > &collection , std::unordered_map< int , std::vector<std::string> > &queries , std::unordered_map <std::string,int> &cf , std::unordered_map <std::string,int> &df){
 
 	collection = read_file(collection_file);
-	//collection = read_some_file(collection_file);
 	queries = read_file(queries_file);
 	cf = build_cf(collection);
 	df = build_df(collection, cf);
 
 }
 
+//Builds the collection, queries cf and df
+void read_all_info_and_index(const std::string &collection_file , const std::string &queries_file , std::unordered_map< int , std::vector<int> > &collection , std::unordered_map< int , std::vector<int> > &queries , std::unordered_map <std::string,int> &index , std::unordered_map <int,int> &cf){
 
+	std::unordered_map< int , std::vector<std::string> > collection_temp = read_file(collection_file);
+	std::unordered_map< int , std::vector<std::string> > queries_temp = read_file(queries_file);
+	std::unordered_map <std::string,int> cf_temp = build_cf(collection_temp);
+	index = build_index(cf_temp,cf);
+	collection = indexation(index , collection_temp);
+	queries = indexation(index , queries_temp);
 
-
+}
 
 //Read the similarities file without considering the similarities lower than a threshold
 void delete_low_similarities(const std::string &collection_cosine_file , const std::string &queries_cosine_file , std::unordered_map< std::string , std::unordered_map<std::string,double> > &all_cos , std::unordered_map<std::string,double> &all_sum_cos , const double &threshold){
 
 	std::unordered_map< std::string , std::unordered_map<std::string,double> > queries_cosine =  read_cos_map_map_file(queries_cosine_file , threshold);
 
-	/*auto iterator = queries_cosine.begin();
-
-	int stop = 0;
-
-	while(iterator != queries_cosine.end()){
-
-		stop += iterator->second.size();
-
-		if(iterator->second.size() != 0){
-
-			std::cout<< "Considered word : " << iterator->first <<std::endl;
-
-			display_map(iterator->second);
-
-		}
-
-		iterator++;
-
-	}
-
-	std::cout<<"Sum size elements queries_cosine : "<< stop <<std::endl;
-
-	cin>>stop;*/
-
 	//std::unordered_map<std::string , double> all_sum_cos_queries  = read_cos_map_file(sum_queries_cosine_file , threshold);
 
 	all_cos =  read_cos_map_map_file(collection_cosine_file , threshold);
-
-	/*std::cout<<"Size all_cos : "<< all_cos.size() <<std::endl;
-
-	auto iterator = all_cos.begin();
-
-	int stop = 0;
-
-	while(iterator != all_cos.end()){
-
-		stop += iterator->second.size();
-
-		if(iterator->second.size() != 0){
-
-			std::cout<< "Considered word : " << iterator->first <<std::endl;
-
-			display_map(iterator->second);
-
-		}
-
-		iterator++;
-
-	}
-
-	std::cout<<"Sum size elements all_cos : "<< stop <<std::endl;
-
-	cin>>stop;*/
 
 	//all_sum_cos  = read_cos_map_file(sum_collection_cosine_file , threshold);
 
@@ -818,11 +775,6 @@ void delete_low_similarities(const std::string &collection_cosine_file , const s
 	all_sum_cos = all_fast_sum_cos_sim(all_cos);
 
 }
-
-
-
-
-
 
 void read_all_info2( const std::string &collection_file , const std::string &queries_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , std::unordered_map< int , std::vector<std::string> > &collection , std::unordered_map< int ,  std::vector<std::string> > &queries , std::unordered_map <std::string,int> &cf , std::unordered_map <std::string,int> &df , std::unordered_map< std::string , std::unordered_map<std::string,double> > &all_cos , std::unordered_map<std::string,double> &all_sum_cos , const double &threshold){
 
@@ -837,62 +789,9 @@ void read_all_info2( const std::string &collection_file , const std::string &que
 
 	std::unordered_map< std::string , std::unordered_map<std::string,double> > queries_cosine =  read_cos_map_map_file(queries_cosine_file , threshold);
 
-
-	/*auto iterator = queries_cosine.begin();
-
-	int stop = 0;
-
-	while(iterator != queries_cosine.end()){
-
-		stop += iterator->second.size();
-
-		if(iterator->second.size() != 0){
-
-			std::cout<< "Considered word : " << iterator->first <<std::endl;
-
-			display_map(iterator->second);
-
-		}
-
-		iterator++;
-
-	}
-
-	std::cout<<"Sum size elements queries_cosine : "<< stop <<std::endl;
-
-	cin>>stop;*/
-
-
-
 	//std::unordered_map<std::string , double> all_sum_cos_queries  = read_cos_map_file(sum_queries_cosine_file , threshold);
 
 	all_cos =  read_cos_map_map_file(collection_cosine_file , threshold);
-
-	/*std::cout<<"Size all_cos : "<< all_cos.size() <<std::endl;
-
-	auto iterator = all_cos.begin();
-
-	int stop = 0;
-
-	while(iterator != all_cos.end()){
-
-		stop += iterator->second.size();
-
-		if(iterator->second.size() != 0){
-
-			std::cout<< "Considered word : " << iterator->first <<std::endl;
-
-			display_map(iterator->second);
-
-		}
-
-		iterator++;
-
-	}
-
-	std::cout<<"Sum size elements all_cos : "<< stop <<std::endl;
-
-	cin>>stop;*/
 
 	//all_sum_cos  = read_cos_map_file(sum_collection_cosine_file , threshold);
 

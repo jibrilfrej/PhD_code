@@ -32,6 +32,65 @@ std::unordered_map <std::string,int> build_cf(const std::unordered_map< int , st
 
 }
 
+
+//Associate each word of the vocabulary with a unique integer
+std::unordered_map <std::string,int> build_index(const std::unordered_map <std::string,int> &cf_temp , std::unordered_map <int,int> &cf){
+
+	std::unordered_map <std::string,int> index;
+
+	int indice = 0;
+
+	auto iterator = cf_temp.begin();
+
+	while(iterator != cf_temp.end()){
+
+		index[iterator->first] = indice;
+		cf[indice] = iterator->second;
+		iterator++;
+		indice++;
+
+	}
+
+	return index;
+
+}
+
+
+ std::vector<int> indexation(const std::unordered_map <std::string,int> &index , const  std::vector<std::string> &document){
+
+	 std::vector<int> indexed_document;
+	 for(unsigned int i = 0 ; i < document.size() ; i++){
+		 if(index.find(document[i]) != index.end()){
+
+		 	indexed_document.push_back(index.find(document[i])->second);
+
+		}
+
+	 }
+
+	 return indexed_document;
+
+}
+
+
+
+std::unordered_map< int , std::vector<int> > indexation(const std::unordered_map <std::string,int> &index , const std::unordered_map< int , std::vector<std::string> > &collection){
+
+	std::unordered_map< int , std::vector<int> > indexed_collection;
+
+	auto iterator = collection.begin();
+	while(iterator != collection.end()){
+
+		indexed_collection[iterator->first] = indexation(index , iterator->second);
+		iterator++;
+
+	}
+
+	return indexed_collection;
+
+}
+
+
 //Given the collection and the vocabulary in input computes and store the document frequency of the terms of the vocabulary in an std::unordered_map
 std::unordered_map <std::string,int> build_df(const std::unordered_map< int , std::vector<std::string> > &collection, const std::unordered_map <std::string,int> &cf){
 
@@ -98,4 +157,25 @@ int coll_freq(const std::unordered_map <std::string,int>  &cf , const std::strin
 	else{return q->second;}
 
 }
+
+
+
+//Return the tf of a term in a document
+int term_freq(const std::vector<int> &doc , const int &term){
+
+	return count(doc.begin() , doc.end() , term);
+
+}
+
+//Return the collection frequency corresponding to the term in input
+int coll_freq(const std::unordered_map <int,int>  &cf , const int &term){
+
+	std::unordered_map<int,int>::const_iterator q = cf.find(term);
+
+	if(q == cf.end() || q->second == -1){return 0;}
+	else{return q->second;}
+
+}
+
+
 #endif

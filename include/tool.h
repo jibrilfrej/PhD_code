@@ -50,7 +50,6 @@ void aggregate_map( std::unordered_map< std::string , std::unordered_map<std::st
 
 	while(iterator != map2.end()){
 
-
 		if(map1.find(iterator->first)==map1.end()){map1[iterator->first]=iterator->second;}
 		iterator++;
 
@@ -471,6 +470,19 @@ size_t get_size_collection( const std::unordered_map <std::string,int> &cf ){
 
 }
 
+//return the size of the collection
+size_t get_size_collection( const std::unordered_map <int,int> &cf ){
+
+	size_t nb_words = 0;
+	std::unordered_map<int,int>::const_iterator p = cf.begin();
+
+	while( p!=  cf.end() ){
+		nb_words += p->second;
+		p++;
+	}
+	return nb_words;
+
+}
 
 //count and displays the number of words in the vocabulary that have an embedding
 int nb_embedded_words_in_voc(Embedding &embedding , const std::unordered_map <std::string,int> &cf){
