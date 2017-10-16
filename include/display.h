@@ -15,6 +15,14 @@ void display(const std::vector<std::string> &sentence){
 	std::cout<<std::endl;
 }
 
+//Displays a document/query
+void display(const std::vector<int> &sentence){
+
+	for(unsigned int i = 0 ; i < sentence.size() ; i++){
+		std::cout<<sentence[i]<<" ";
+	}
+	std::cout<<std::endl;
+}
 
 //display the contend of an unordered_map<string,double>
 void display_map(const std::unordered_map<std::string , double> &map){

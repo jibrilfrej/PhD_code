@@ -1,55 +1,52 @@
 #ifndef test_h
 #define test_h
 
+
+#include "readwrite.h"
 #include "closest.h"
 #include "launch_exp.h"
 
 
-void compute_and_save_cosine(const std::string &collection_file , const std::string &queries_file){
+void compute_and_save_index_and_cosine(const std::string &collection_file , const std::string &queries_file , const	std::string &index_file , const	std::string &collection_cosine_file , const	std::string &queries_cosine_file , const	std::string &embeddings_file ){
 
-	std::string collection_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos00";
-	std::string queries_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos_queries_temp";
-	std::string embeddings_file = "../data/embeddings/GoogleNews-vectors-negative300/GoogleNews-vectors-negative300.bin";
 
 	Embedding embedding;
 
 	embedding.load_Word2VecBinFormat(embeddings_file.c_str());
 
-	std::unordered_map< int , std::vector<std::string> > collection;
+	std::unordered_map< int , std::vector<int> > collection;
+	std::unordered_map< int , std::vector<int> > queries;
+	std::unordered_map <std::string,int> index;
+	std::unordered_map <int,int> cf;
 
-	std::unordered_map< int , std::vector<std::string> > queries;
-
-	std::unordered_map <std::string,int> cf;
-
-	std::unordered_map <std::string,int> df;
-
-	read_all_info( collection_file , queries_file , collection , queries , cf , df);
+	read_all_info_and_index(collection_file , queries_file , collection , queries , index , cf);
 
 	std::cout<<"Query size : "<< queries.size() <<std::endl;
 
-	nb_embedded_words_in_voc(embedding , cf);
+	nb_embedded_words_in_voc(embedding , index , cf);
 
-	nb_embedded_words_in_queries(embedding , queries , false);
+	nb_embedded_words_in_queries(embedding , queries , index , true);
 
-	std::unordered_map< std::string , std::unordered_map<std::string,double> > set_closest_words;
+	//save index
+	write_map(index , index_file);
+
+	std::unordered_map< int , std::unordered_map<int,double> > set_closest_words;
 
 	//Queries
 
-	set_closest_words = closest_terms(queries , cf ,embedding ,  0.4);
+	set_closest_words = closest_terms(queries , index ,embedding ,  0.4);
 
 	write_map_map(set_closest_words , queries_cosine_file);
 
 	std::cout << "Taille set_closest_words : " << set_closest_words.size() <<std::endl;
 
-
 	//Vocabulary
 
-	//set_closest_words = closest_terms(cf , embedding , 0.1);
+	set_closest_words = indexed_closest_terms(index , embedding , 0.4);
 
-	//write_map_map(set_closest_words , collection_cosine_file);
+	write_map_map(set_closest_words , collection_cosine_file);
 
-	//save_closest_terms(collection_cosine_file , cf , embedding ,  0.4);
-
+	//save_closest_terms(collection_cosine_file , index , embedding ,  0.4);
 
 }
 
@@ -63,7 +60,6 @@ void hiemstra_test(const std::string &collection_file , const std::string &queri
 
 }
 
-
 void dirichlet_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
 
 	double mu = 80;
@@ -71,40 +67,39 @@ void dirichlet_test(const std::string &collection_file , const std::string &quer
 	double mu_step = 10;
 	int nb_iter = 10;
 	launch_Dirichlet_experience(collection_file , queries_file , res_file , mu , mu_step , nb_iter , k );
+	system("../scripts/super_trec.sh dirichlet");
+	write_Average_Precision("../data/AveragePrecision/AP" , "../../../trec_eval.8.1/results/" , true , false , false);
 
 }
 
-
-void embedding_test(const std::string &collection_file , const std::string &queries_file , const std::string &res_file){
-
-	std::string collection_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos04";
-	std::string queries_cosine_file = "../data/embeddings/GoogleNews-vectors-negative300/stop_cos_queries_04";
+void embedding_test(const std::string &collection_file , const std::string &queries_file , const std::string &index_file , const std::string &res_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file){
 
 	int k = 1000;
 
-	double mu = 100;
+	double mu = 10;
 
-	double mu_step = 20;
+	double mu_step = 10;
 
-	int nb_iter_mu = 2;
+	int nb_iter_mu = 50;
 
-	double threshold = 0.6;
+	double threshold = 1.0;
 
 	double threshold_step = 0.05;
 
-	int nb_iter_threshold = 2;
+	int nb_iter_threshold = 1;
 
-	double alpha = 0.6;
+	double alpha = 0.0;
 
 	double alpha_step = 0.05;
 
-	int nb_iter_alpha = 2;
+	int nb_iter_alpha = 1;
 
-	launch_embedded_experience(collection_file , queries_file , res_file , collection_cosine_file , queries_cosine_file , mu, mu_step , nb_iter_mu, k , threshold, threshold_step ,nb_iter_threshold, alpha, alpha_step , nb_iter_alpha);
+	launch_embedded_experience(collection_file , queries_file , index_file , res_file , collection_cosine_file , queries_cosine_file , mu, mu_step , nb_iter_mu, k , threshold, threshold_step ,nb_iter_threshold, alpha, alpha_step , nb_iter_alpha);
 
+	system("../scripts/super_trec.sh embedding");
+
+	write_Average_Precision("../data/AveragePrecision/AP" , "../../../trec_eval.8.1/results/" , true , false , false);
 
 }
-
-
 
 #endif

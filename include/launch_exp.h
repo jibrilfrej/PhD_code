@@ -115,30 +115,20 @@ void launch_Dirichlet_experience(const std::string &collection_file , const std:
 
 
 //Performs a set of experiments with an embedded model
-void launch_embedded_experience(const std::string &collection_file , const std::string &queries_file , const std::string &res_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , const double &mu , const double &mu_step , const int &nb_iter_mu , const int k , const double &threshold, const double &threshold_step , const int &nb_iter_threshold , const double &alpha, const double &alpha_step , const int &nb_iter_alpha ){
+void launch_embedded_experience(const std::string &collection_file , const std::string &queries_file , const std::string &index_file , const std::string &res_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , const double &mu , const double &mu_step , const int &nb_iter_mu , const int k , const double &threshold, const double &threshold_step , const int &nb_iter_threshold , const double &alpha, const double &alpha_step , const int &nb_iter_alpha ){
 
-	std::unordered_map< std::string , std::unordered_map<std::string,double> > all_cos;
-	std::unordered_map<std::string,double> all_sum_cos;
-	std::unordered_map< int , std::vector<std::string> > collection;
-	std::unordered_map< int , std::vector<std::string> > queries;
-	std::unordered_map <std::string,int> cf;
-	std::unordered_map <std::string,int> df;
+	std::unordered_map< int , std::unordered_map<int,double> > all_cos;
+	std::unordered_map<int,double> all_sum_cos;
+	std::unordered_map< int , std::vector<int> > collection;
+	std::unordered_map< int , std::vector<int> > queries;
+	std::unordered_map <std::string,int> index;
+	std::unordered_map <int,int> cf;
 
 	std::cout<< "Total number of iterations : " << nb_iter_mu*nb_iter_threshold*nb_iter_alpha <<std::endl;
 
-	clock_t begin = clock();
+	double threshold_max = threshold+threshold_step*(nb_iter_threshold-1);
 
-	double threshold_max = threshold+threshold_step*nb_iter_threshold;
-
-	read_all_info2( collection_file , queries_file , collection_cosine_file , queries_cosine_file , collection , queries , cf , df , all_cos , all_sum_cos , threshold_max);
-
-	write_xml_collection_file(collection, "../../../Terrier4.2/terrier-core-4.2/share/CHIC2012/synthetic/xml_synthetic_collection");
-
-	clock_t end = clock();
-  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
-
-	display_stuff(collection , queries , cf , df);
+	read_all_info_and_index2( collection_file , queries_file , index_file , collection_cosine_file , queries_cosine_file , collection , queries , index, cf , all_cos , all_sum_cos , threshold_max);
 
 	size_t nb_words = get_size_collection(cf);
 
@@ -192,89 +182,5 @@ void launch_embedded_experience(const std::string &collection_file , const std::
 	}
 
 }
-
-
-//Performs a set of experiments with an embedded model
-void launch_expanded_experience(const std::string &collection_file , const std::string &queries_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , const std::string &sum_queries_cosine_file , double &mu ,  const double &mu_step , const int nb_iter , const int k , double &threshold , const double &threshold_min , const double &threshold_max , const double &threshold_step ){
-
-	std::unordered_map< std::string , std::unordered_map<std::string,double> > all_cos;
-	std::unordered_map< int , std::unordered_map<std::string,double> > all_cos_sum_queries;
-	std::unordered_map<std::string,double> all_sum_cos;
-	std::vector< std::vector< std::pair<int,double> > > results;
-	std::unordered_map< int , std::vector<std::string> > collection;
-	std::unordered_map< int , std::vector<std::string> > queries;
-	std::unordered_map <std::string,int> cf;
-	std::unordered_map <std::string,int> df;
-	std::string file_name;
-	double mu_temp;
-
-
-	clock_t begin = clock();
-
-	read_all_info3( collection_file , queries_file , collection_cosine_file , queries_cosine_file , sum_queries_cosine_file , collection , queries , cf , df , all_cos , all_sum_cos , all_cos_sum_queries , threshold);
-
-
-	write_xml_collection_file(collection, "../../../Terrier4.2/terrier-core-4.2/share/CHIC2012/synthetic/xml_synthetic_collection");
-
-	clock_t end = clock();
-  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout<< "Time to do all the stuff : "<< elapsed_secs <<std::endl;
-
-	display_stuff(collection , queries , cf , df);
-
-	size_t nb_words = get_size_collection(cf);
-
-	//int current_iter;
-
-	int nthreads, tid;
-
-	while(threshold < threshold_max + abs(threshold_step/1000) && threshold > threshold_min - abs(threshold_step/1000)){
-
-		//current_iter = 0;
-
-
-
-	#pragma omp parallel private(file_name , mu_temp , results , tid) shared(mu , mu_step )
-	{
-
-
-		tid = omp_get_thread_num();
-
-        //std::cout<<"Thread No "<<tid<<std::endl;
-        if (tid == 0)
-        {
-            nthreads = omp_get_num_threads();
-            std::cout<<"Number of thread: "<<nthreads<<std::endl;
-        }
-
-		mu_temp = mu;
-
-		#pragma omp for schedule(static)
-		for(int current_iter = 0 ; current_iter < nb_iter ; current_iter++){
-		//while(current_iter < nb_iter){
-			mu_temp = mu + mu_step*(current_iter);
-			results = Dirichlet_embedding_model_Qexp(mu_temp , queries , collection , cf , all_sum_cos , all_cos , all_cos_sum_queries , k , nb_words);
-			std::cout<< "Performed all the queries for mu = "<<mu_temp<< " and the threshold = " <<threshold<<std::endl;
-			file_name = "../data/res/results";
-			file_name += std::to_string(mu_temp);
-			file_name += "thresh";
-			file_name += std::to_string(threshold);
-			write_res_file(results , file_name , "CHIC-" , mu_temp);
-			//mu_temp += mu_step;
-			//current_iter++;
-
-		}
-
-	}
-
-	threshold += threshold_step;
-
-	delete_low_similarities(collection_cosine_file , queries_cosine_file , all_cos , all_sum_cos , threshold);
-
-	}
-
-
-}
-
 
 #endif

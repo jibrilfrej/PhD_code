@@ -2,6 +2,7 @@
 #define closest_h
 
 
+#include "tool.h"
 #include "embedding.h"
 #include <cstring>
 #include <vector>
@@ -28,6 +29,36 @@ std::unordered_map<std::string,double> closest_terms(const std::string &term , c
 		if( cos > threshold && term != iterator->first){
 
 			most_sim[iterator->first.c_str()] = cos;
+
+		}
+
+		iterator++;
+
+	}
+
+	return most_sim;
+
+}
+
+
+
+//Returns the terms the have a higher similarity than a given threshold of a given term in the vocabulary
+std::unordered_map<int,double> indexed_closest_terms(const std::string &term , const std::unordered_map <std::string,int> &index , Embedding &embedding ,  const double &threshold){
+
+	std::unordered_map<int,double> most_sim;
+
+	if(embedding.get(term.c_str())==nullptr){return most_sim;}
+
+	float cos;
+
+	auto iterator = index.begin();
+	while(iterator != index.end()){
+
+		cos =embedding.cosine(term.c_str() , iterator->first.c_str());
+
+		if( cos > threshold && term != iterator->first){
+
+			most_sim[iterator->second] = cos;
 
 		}
 
@@ -99,6 +130,65 @@ std::unordered_map< std::string , std::unordered_map<std::string,double> > close
 
 
 
+//Same as before but over the entire vocabulary
+std::unordered_map< int , std::unordered_map<int,double> > indexed_closest_terms(const std::unordered_map <std::string,int> &index , Embedding &embedding ,  const double &threshold){
+
+	std::unordered_map< int , std::unordered_map<int,double> > set_most_sim;
+
+	std::vector<std::string> temp;
+
+	auto iterator = index.begin();
+
+	while(iterator != index.end()){
+
+		temp.push_back(iterator->first);
+		iterator++;
+
+	}
+
+	int nthreads, tid;
+
+	#pragma omp parallel private(tid) shared(temp , index , embedding , threshold)
+    {
+        tid = omp_get_thread_num();
+
+        std::unordered_map< int , std::unordered_map<int,double> > mapLocal;
+
+        if (tid == 0)
+        {
+            nthreads = omp_get_num_threads();
+            std::cout<<"Number of thread: "<<nthreads<<std::endl;
+        }
+
+		#pragma omp for schedule(static)
+		for(unsigned int i = 0 ; i < temp.size() ; i++){
+
+		//while(iterator != cf.end()){
+
+			//set_most_sim[iterator->first] = closest_terms(iterator->first , cf , embedding , threshold);
+			
+			mapLocal[index.at(temp[i])] = indexed_closest_terms(temp[i] , index , embedding , threshold);
+
+			//iterator++;
+		}
+
+
+
+		#pragma omp critical
+        {
+            std::cout<<"Fusion "<<tid<<" map size="<<mapLocal.size()<<std::endl;
+            set_most_sim.insert(mapLocal.begin(),mapLocal.end());
+
+        }
+
+
+	}
+
+	return set_most_sim;
+
+}
+
+
 
 
 
@@ -164,6 +254,40 @@ std::unordered_map< std::string , std::unordered_map<std::string,double> > close
 	return set_most_sim;
 
 }
+
+
+
+//Same as before but over the queries
+std::unordered_map< int , std::unordered_map<int,double> > closest_terms(const std::unordered_map< int , std::vector<int> > &queries , const std::unordered_map <std::string,int> &index , Embedding &embedding ,  const double &threshold){
+
+	std::unordered_map< int , std::unordered_map<int,double> > set_most_sim;
+
+	std::unordered_map<int,std::string> index_temp = switch_index(index);
+
+	int compteur = 0;
+
+	auto iterator = queries.begin();
+
+	while(iterator != queries.end()){
+
+		for(unsigned int j = 0 ; j < iterator->second.size() ; j++){
+
+			set_most_sim[iterator->second[j]] = indexed_closest_terms(index_temp[iterator->second[j]] , index , embedding , threshold);
+
+		}
+
+		compteur++;
+
+		std::cout<<"\rProgress : ("<< compteur <<"/" << queries.size() << ")"<<std::flush;
+
+		iterator++;
+
+	}
+
+	return set_most_sim;
+
+}
+
 
 
 //Returns the terms the have a higher similarity than a given threshold of a given term in the vocabulary

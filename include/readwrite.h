@@ -39,6 +39,26 @@ void write_map(const std::unordered_map< std::string , double > &map , const std
 
 }
 
+//Write a <string,double> map in a file
+void write_map(const std::unordered_map< std::string , int > &map , const std::string &file_name){
+
+	std::ofstream myfile;
+  myfile.open (file_name.c_str());
+
+	auto iterator = map.begin();
+
+	while( iterator != map.end() ){
+
+		myfile << iterator->first + " " + std::to_string(iterator->second) + "\n";
+
+		iterator++;
+
+	}
+
+  	myfile.close();
+
+}
+
 
 //Take a string as input and return a pair of string and double using the delimiter
 std::pair<std::string,double> read_pair(const std::string &str, const char delimiter) {
@@ -190,6 +210,42 @@ void write_map_map(const std::unordered_map< int , std::unordered_map<std::strin
 
 }
 
+
+
+//Write in a file the set of the closest words of the vocabulary
+void write_map_map(const std::unordered_map< int , std::unordered_map<int,double> > &set_closest_words , const std::string &file_name){
+
+	std::ofstream myfile;
+  myfile.open (file_name.c_str());
+
+	auto iterator = set_closest_words.begin();
+	std::unordered_map<int,double>::const_iterator iterator2;
+
+	while( iterator != set_closest_words.end() ){
+
+		myfile << std::to_string(iterator->first) + "\n";
+
+		iterator2 = iterator->second.begin();
+
+		while(iterator2 != iterator->second.end()){
+
+			myfile << std::to_string(iterator2->first) + " " + std::to_string(iterator2->second) + " ";
+			iterator2++;
+
+		}
+
+		myfile << "\n";
+
+		iterator++;
+
+	}
+
+  	myfile.close();
+
+}
+
+
+
 //Takes a string that corresponds to one line of the mapmap file as an input and returns an unordered_map
 std::unordered_map<std::string,double> read_map(const std::string &line , const double &threshold){
 
@@ -214,7 +270,28 @@ std::unordered_map<std::string,double> read_map(const std::string &line , const 
 }
 
 
+//Takes a string that corresponds to one line of the mapmap file as an input and returns an unordered_map
+std::unordered_map<int,double> read_indexed_map(const std::string &line , const double &threshold){
 
+	std::unordered_map<int,double> res;
+
+	std::stringstream ss(line);
+  std::string tok;
+	std::string tok2;
+	while(getline(ss, tok, ' ')){
+
+		getline(ss, tok2, ' ');
+
+		if(tok!="\n" && atof(tok2.c_str()) > threshold ){
+
+			res[std::stoi(tok)] = atof(tok2.c_str());
+		}
+
+	}
+
+	return res;
+
+}
 
 
 
@@ -246,6 +323,40 @@ std::unordered_map< std::string , std::unordered_map<std::string,double> > read_
 	return res;
 
 }
+
+
+//Read a file containing the mapmap
+std::unordered_map< int , std::unordered_map<int,double> > read_indexed_cos(const std::string &file_name , const double &threshold){
+
+	FILE* f = fopen(file_name.c_str(),"r");
+
+	size_t len = 10000;
+
+	char* line = (char*)malloc(len);
+	char* line2 = (char*)malloc(len);
+
+	size_t nread;
+
+	std::unordered_map< int , std::unordered_map<int,double> > res;
+
+	//std::cout << "Filename : " << file_name <<'\n';
+
+	while (int(nread = getline(&line, &len, f)) != -1) {
+
+		getline(&line2, &len, f);
+		//std::cout << "atoi : " << std::string(line).erase(std::string(line).size()-1) << '\n';
+		res[std::stoi(std::string(line).erase(std::string(line).size()-1))] = read_indexed_map(line2 , threshold);
+
+	}
+
+	free(line);
+	free(line2);
+
+	return res;
+
+}
+
+
 
 //Read a file containing the mapmap
 std::unordered_map< int , std::unordered_map<std::string,double> > read_cos_sum_query_map_map_file(const std::string &file_name , const double &threshold){
@@ -525,7 +636,7 @@ int separate_qrel_file(const std::string &filename , const std::string &filename
     while( getline(in,line) )
     {
 
-        if( collection.find(stoi( easy_split(line, ' ')[2] )) != collection.end()  ){
+        if( collection.find(std::stoi( easy_split(line, ' ')[2] )) != collection.end()  ){
 
 			train << line << "\n";
 
@@ -750,7 +861,7 @@ void read_all_info_and_index(const std::string &collection_file , const std::str
 
 	std::unordered_map< int , std::vector<std::string> > collection_temp = read_file(collection_file);
 	std::unordered_map< int , std::vector<std::string> > queries_temp = read_file(queries_file);
-	std::unordered_map <std::string,int> cf_temp = build_cf(collection_temp);
+	std::unordered_map <std::string,int> cf_temp = build_cf(collection_temp , queries_temp);
 	index = build_index(cf_temp,cf);
 	collection = indexation(index , collection_temp);
 	queries = indexation(index , queries_temp);
@@ -762,19 +873,28 @@ void delete_low_similarities(const std::string &collection_cosine_file , const s
 
 	std::unordered_map< std::string , std::unordered_map<std::string,double> > queries_cosine =  read_cos_map_map_file(queries_cosine_file , threshold);
 
-	//std::unordered_map<std::string , double> all_sum_cos_queries  = read_cos_map_file(sum_queries_cosine_file , threshold);
-
 	all_cos =  read_cos_map_map_file(collection_cosine_file , threshold);
 
-	//all_sum_cos  = read_cos_map_file(sum_collection_cosine_file , threshold);
-
 	aggregate_map( all_cos , queries_cosine );
-
-	//aggregate_map( all_sum_cos , all_sum_cos_queries );
 
 	all_sum_cos = all_fast_sum_cos_sim(all_cos);
 
 }
+
+
+//Read the similarities file without considering the similarities lower than a threshold
+void delete_low_similarities(const std::string &collection_cosine_file , const std::string &queries_cosine_file , std::unordered_map< int , std::unordered_map<int,double> > &all_cos , std::unordered_map<int,double> &all_sum_cos , const double &threshold){
+
+	std::unordered_map< int , std::unordered_map<int,double> > queries_cosine =  read_indexed_cos(queries_cosine_file , threshold);
+
+	all_cos =  read_indexed_cos(collection_cosine_file , threshold);
+
+	aggregate_map( all_cos , queries_cosine );
+
+	all_sum_cos = all_fast_sum_cos_sim(all_cos);
+
+}
+
 
 void read_all_info2( const std::string &collection_file , const std::string &queries_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , std::unordered_map< int , std::vector<std::string> > &collection , std::unordered_map< int ,  std::vector<std::string> > &queries , std::unordered_map <std::string,int> &cf , std::unordered_map <std::string,int> &df , std::unordered_map< std::string , std::unordered_map<std::string,double> > &all_cos , std::unordered_map<std::string,double> &all_sum_cos , const double &threshold){
 
@@ -789,28 +909,45 @@ void read_all_info2( const std::string &collection_file , const std::string &que
 
 	std::unordered_map< std::string , std::unordered_map<std::string,double> > queries_cosine =  read_cos_map_map_file(queries_cosine_file , threshold);
 
-	//std::unordered_map<std::string , double> all_sum_cos_queries  = read_cos_map_file(sum_queries_cosine_file , threshold);
-
 	all_cos =  read_cos_map_map_file(collection_cosine_file , threshold);
 
-	//all_sum_cos  = read_cos_map_file(sum_collection_cosine_file , threshold);
-
 	aggregate_map( all_cos , queries_cosine );
-
-	//aggregate_map( all_sum_cos , all_sum_cos_queries );
 
 	all_sum_cos = all_fast_sum_cos_sim(all_cos);
 
 	clock_t end = clock();
-  	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	std::cout<< "Time to read the cosine files : "<< elapsed_secs <<std::endl;
-
-
 
 }
 
 
+void read_all_info_and_index2( const std::string &collection_file , const std::string &queries_file ,  const std::string &index_file , const std::string &collection_cosine_file , const std::string &queries_cosine_file , std::unordered_map< int , std::vector<int> > &collection , std::unordered_map< int ,  std::vector<int> > &queries , std::unordered_map <std::string,int> &index , std::unordered_map <int,int> &cf ,  std::unordered_map< int , std::unordered_map<int,double> > &all_cos , std::unordered_map<int,double> &all_sum_cos , const double &threshold){
 
+	std::unordered_map< int , std::vector<std::string> > collection_temp = read_file(collection_file);
+	std::unordered_map< int , std::vector<std::string> > queries_temp = read_file(queries_file);
+	index = read_tf_file(index_file);
+	collection = indexation(index , collection_temp);
+	queries = indexation(index , queries_temp);
+	cf =  build_cf(collection , queries);
+
+	std::cout<<"Location of the cosine files :"<< queries_cosine_file <<" and "<< collection_cosine_file <<std::endl;
+
+	clock_t begin = clock();
+
+	std::unordered_map< int , std::unordered_map<int,double> > queries_cosine =  read_indexed_cos(queries_cosine_file , threshold);
+
+	all_cos =  read_indexed_cos(collection_cosine_file , threshold);
+
+	aggregate_map( all_cos , queries_cosine );
+
+	all_sum_cos = all_fast_sum_cos_sim(all_cos);
+
+	clock_t end = clock();
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	std::cout<< "Time to read the cosine files : "<< elapsed_secs <<std::endl;
+
+}
 
 
 
@@ -931,9 +1068,75 @@ void save_closest_terms(const std::string &file_name , const std::unordered_map 
 
 
 
+/*
+//Same as before but over the entire vocabulary
+void save_closest_terms2(const std::string &file_name , const std::unordered_map <std::string,int> &index , Embedding &embedding ,  const double &threshold){
+
+	std::vector<int> temp;
+
+	auto iterator = index.begin();
+
+	while(iterator != index.end()){
+
+		temp.push_back(iterator->first);
+		iterator++;
+
+	}
+
+	int nthreads, tid;
+
+	bool first = true;
+
+	#pragma omp parallel private(tid) shared(temp , cf , embedding , threshold , first)
+    {
+        tid = omp_get_thread_num();
+
+        std::unordered_map< int , std::unordered_map<int,double> > mapLocal;
+
+        if (tid == 0)
+        {
+            nthreads = omp_get_num_threads();
+            std::cout<<"Number of thread: "<<nthreads<<std::endl;
+        }
+
+		#pragma omp for schedule(static)
+		for(unsigned int i = 0 ; i < temp.size() ; i++){
+
+		//while(iterator != cf.end()){
+
+			//set_most_sim[iterator->first] = closest_terms(iterator->first , cf , embedding , threshold);
+			mapLocal[temp[i]] = closest_terms(temp[i] , index , embedding , threshold);
+
+			//iterator++;
+		}
 
 
 
+		#pragma omp critical
+        {
+
+			std::cout<<"Ecriture "<<tid<<" map size="<<mapLocal.size()<<std::endl;
+			if(first){
+
+				write_map_map(mapLocal ,file_name);
+				first = false;
+
+			}
+
+			else{
+
+				write_map_map_end_file(mapLocal ,file_name);
+
+			}
+
+        }
+
+
+	}
+
+}
+
+*/
 
 
 

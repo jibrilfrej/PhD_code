@@ -32,6 +32,83 @@ std::unordered_map <std::string,int> build_cf(const std::unordered_map< int , st
 
 }
 
+//Builds the vocabulary given the collection in input and stores it in an std::unordered_map of <std::string,int> the std::string being the words and the int their associated collection frequency
+std::unordered_map <std::string,int> build_cf(const std::unordered_map< int , std::vector<std::string> > &collection , const std::unordered_map< int , std::vector<std::string> > &queries){
+
+	std::unordered_map <std::string,int>  cf;
+
+	auto iterator = collection.begin();
+
+	while( iterator != collection.end() ){
+
+		for(unsigned int j = 0 ; j < iterator->second.size() ; j++){
+
+			if(iterator->second[j].size() > 1 || isValidChar(iterator->second[j][0])){
+				cf[ iterator->second[j] ]++;
+			}
+		}
+
+		iterator++;
+
+	}
+
+	iterator = queries.begin();
+
+	while( iterator != queries.end() ){
+
+		for(unsigned int j = 0 ; j < iterator->second.size() ; j++){
+
+			if((iterator->second[j].size() > 1 || isValidChar(iterator->second[j][0]))&&cf.find(iterator->second[j])==cf.end()){
+				cf[ iterator->second[j] ] = 0;
+			}
+		}
+
+		iterator++;
+
+	}
+
+	return cf;
+
+}
+
+
+//Builds the vocabulary given the collection in input and stores it in an std::unordered_map of <std::string,int> the std::string being the words and the int their associated collection frequency
+std::unordered_map <int,int> build_cf(const std::unordered_map< int , std::vector<int> > &collection , const std::unordered_map< int , std::vector<int> > &queries){
+
+	std::unordered_map <int,int>  cf;
+
+	auto iterator = collection.begin();
+
+	while( iterator != collection.end() ){
+
+		for(unsigned int j = 0 ; j < iterator->second.size() ; j++){
+				cf[ iterator->second[j] ]++;
+		}
+
+		iterator++;
+
+	}
+
+	iterator = queries.begin();
+
+	while( iterator != queries.end() ){
+
+		for(unsigned int j = 0 ; j < iterator->second.size() ; j++){
+			if(cf.find(iterator->second[j])==cf.end()){
+
+					cf[ iterator->second[j] ] = 0;
+
+			}
+		}
+
+		iterator++;
+
+	}
+
+	return cf;
+
+}
+
 
 //Associate each word of the vocabulary with a unique integer
 std::unordered_map <std::string,int> build_index(const std::unordered_map <std::string,int> &cf_temp , std::unordered_map <int,int> &cf){
@@ -54,6 +131,7 @@ std::unordered_map <std::string,int> build_index(const std::unordered_map <std::
 	return index;
 
 }
+
 
 
  std::vector<int> indexation(const std::unordered_map <std::string,int> &index , const  std::vector<std::string> &document){
@@ -168,7 +246,7 @@ int term_freq(const std::vector<int> &doc , const int &term){
 }
 
 //Return the collection frequency corresponding to the term in input
-int coll_freq(const std::unordered_map <int,int>  &cf , const int &term){
+int coll_freq(const std::unordered_map <int,int>  &cf , const int term){
 
 	std::unordered_map<int,int>::const_iterator q = cf.find(term);
 
